@@ -1,4 +1,4 @@
-name: Build Plugin
+name: Build Minecraft Plugin
 
 on:
   workflow_dispatch:
@@ -17,13 +17,18 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Build with Gradle
+      - name: Unzip source
+        run: unzip DBtesting-plugin-source.zip
+
+      - name: Build with Gradle (no wrapper)
         uses: gradle/gradle-build-action@v3
         with:
+          gradle-version: 8.5
+          build-root-directory: .
           arguments: build
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: DBAdvancedHome
+          name: DBtesting-plugin
           path: build/libs/*.jar
