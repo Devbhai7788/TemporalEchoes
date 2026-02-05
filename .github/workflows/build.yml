@@ -1,38 +1,43 @@
-plugins {
-    id 'java'
-}
+name: Build Minecraft Plugin
 
-group = 'com.db'
-version = '1.0'
+on:
+  workflow_dispatch:
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-repositories {
-    mavenCentral()
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    // Paper API
-    maven {
-        url = "https://repo.papermc.io/repository/maven-public/"
-    }
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
 
-    // XSeries (IMPORTANT)
-    maven {
-        url = "https://jitpack.io"
-    }
-}
+      - name: Find and unzip plugin source
+        run: |
+          echo "Finding zip file..."
+          ZIP_FILE=$(ls *.zip | head -n 1)
+          echo "ZIP_FILE=$ZIP_FILE"
+          unzip "$ZIP_FILE"
 
-dependencies {
-    // Paper API
-    compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+      - name: Find project directory
+        run: |
+          PROJECT_DIR=$(find . -maxdepth 2 -name build.gradle | head -n 1 | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
-    // XSeries (FIXES YOUR ERROR)
-    compileOnly "com.github.cryptomorin:XSeries:9.6.1"
-}
+      - name: Build with Gradle (no wrapper)
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.5
+          build-root-directory: ${{ env.PROJECT_DIR }}
+          arguments: build
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = "UTF-8"
-}
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-jar
+          path: ${{ env.PROJECT_DIR }}/build/libs/*.jar
