@@ -18,7 +18,7 @@ jobs:
           java-version: 21
 
       - name: Unzip source
-        run: unzip DBtesting-plugin-source.zip
+        run: unzip DBAdvancedHome-1770281061350.zip
 
       - name: Build with Gradle (no wrapper)
         uses: gradle/gradle-build-action@v3
