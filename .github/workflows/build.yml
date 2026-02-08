@@ -1,4 +1,4 @@
-name: Build Minecraft Plugin
+name: Build Minecraft Plugin (ZIP)
 
 on:
   workflow_dispatch:
@@ -8,36 +8,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      - name: Find and unzip plugin source
+      - name: Unzip source
         run: |
-          echo "Finding zip file..."
-          ZIP_FILE=$(ls *.zip | head -n 1)
-          echo "ZIP_FILE=$ZIP_FILE"
-          unzip "$ZIP_FILE"
+          unzip -o *.zip
+          ls -R
 
-      - name: Find project directory
+      - name: Build
         run: |
-          PROJECT_DIR=$(find . -maxdepth 2 -name build.gradle | head -n 1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - name: Build with Gradle (no wrapper)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.5
-          build-root-directory: ${{ env.PROJECT_DIR }}
-          arguments: build
+          PROJECT_DIR=$(find . -name build.gradle | head -n 1 | xargs dirname)
+          cd "$PROJECT_DIR"
+          gradle clean build
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: plugin-jar
-          path: ${{ env.PROJECT_DIR }}/build/libs/*.jar
+          path: "**/build/libs/*.jar"
